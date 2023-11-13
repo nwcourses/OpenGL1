@@ -22,9 +22,12 @@ class OpenGLView(ctx: Context): GLSurfaceView(ctx), GLSurfaceView.Renderer {
 
     val gpu = GPUInterface("default shader")
 
+
     var fbuf: FloatBuffer? = null
 
     val red = floatArrayOf(1f, 0f, 0f, 1f)
+    val yellow = floatArrayOf(1f, 1f, 0f, 1f)
+    val blue = floatArrayOf(0f, 0f, 1f, 0f)
 
     // Setup code to run when the OpenGL view is first created.
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
@@ -37,14 +40,17 @@ class OpenGLView(ctx: Context): GLSurfaceView(ctx), GLSurfaceView.Renderer {
 
         try {
             val success = gpu.loadShaders(context.assets, "vertex.glsl", "fragment.glsl")
-            if(!success) {
+            if(success == false) {
                 Log.d("opengl01", gpu.lastShaderError)
             }
             fbuf = OpenGLUtils.makeFloatBuffer(
                 floatArrayOf(
                     0f, 0f, 0f,
                     1f, 0f, 0f,
-                    0f, 1f, 0f
+                    0f, 1f, 0f,
+                    0f, 0f, 0f,
+                    -1f, 0f, 0f,
+                    0f, -1f, 0f
                 )
             )
             // Selects this shader program
@@ -63,13 +69,15 @@ class OpenGLView(ctx: Context): GLSurfaceView(ctx), GLSurfaceView.Renderer {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT or GLES20.GL_DEPTH_BUFFER_BIT)
 
         val ref_aVertex = gpu.getAttribLocation("aVertex")
-        val ref_uColour = gpu.getAttribLocation("uColour")
+        val ref_uColour = gpu.getUniformLocation("uColour")
 
         // Only run code below if buffer is not null
         fbuf?.apply {
-            gpu.setUniform4FloatArray(ref_uColour, red)
+            gpu.setUniform4FloatArray(ref_uColour, blue)
             gpu.specifyBufferedDataFormat(ref_aVertex, this, 0 )
             gpu.drawBufferedTriangles(0, 3)
+            gpu.setUniform4FloatArray(ref_uColour, yellow)
+            gpu.drawBufferedTriangles(3, 3)
         }
 
     }

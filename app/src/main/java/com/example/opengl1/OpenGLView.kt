@@ -3,6 +3,7 @@ package com.example.opengl1
 import android.content.Context
 import android.opengl.GLES20
 import android.opengl.GLSurfaceView
+import android.util.AttributeSet
 import android.util.Log
 import freemap.openglwrapper.GPUInterface
 import freemap.openglwrapper.OpenGLUtils
@@ -13,7 +14,7 @@ import javax.microedition.khronos.opengles.GL10
 
 // Our GLSurfaceView for rendering the 3D world.
 
-class OpenGLView(ctx: Context): GLSurfaceView(ctx), GLSurfaceView.Renderer {
+class OpenGLView(ctx: Context, aSet:AttributeSet): GLSurfaceView(ctx, aSet), GLSurfaceView.Renderer {
 
     init {
         setEGLContextClientVersion(2) // use GL ES 2

@@ -6,7 +6,6 @@ import android.os.Bundle
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val glView = OpenGLView(this)
-        setContentView(glView)
+        setContentView(R.layout.activity_main)
     }
 }

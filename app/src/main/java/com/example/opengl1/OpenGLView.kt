@@ -5,6 +5,8 @@ import android.opengl.GLES20
 import android.opengl.GLSurfaceView
 import android.util.AttributeSet
 import android.util.Log
+import freemap.openglwrapper.Camera
+import freemap.openglwrapper.GLMatrix
 import freemap.openglwrapper.GPUInterface
 import freemap.openglwrapper.OpenGLUtils
 import java.io.IOException
@@ -14,7 +16,8 @@ import javax.microedition.khronos.opengles.GL10
 
 // Our GLSurfaceView for rendering the 3D world.
 
-class OpenGLView(ctx: Context, aSet:AttributeSet): GLSurfaceView(ctx, aSet), GLSurfaceView.Renderer {
+class OpenGLView(ctx: Context, aSet: AttributeSet) : GLSurfaceView(ctx, aSet),
+    GLSurfaceView.Renderer {
 
     init {
         setEGLContextClientVersion(2) // use GL ES 2
@@ -30,6 +33,12 @@ class OpenGLView(ctx: Context, aSet:AttributeSet): GLSurfaceView(ctx, aSet), GLS
     val yellow = floatArrayOf(1f, 1f, 0f, 1f)
     val blue = floatArrayOf(0f, 0f, 1f, 0f)
 
+    // Create a Camera object
+    val camera = Camera(0f, 0f, 0f)
+
+    val viewMatrix = GLMatrix()
+    val projectionMatrix = GLMatrix()
+
     // Setup code to run when the OpenGL view is first created.
     override fun onSurfaceCreated(gl: GL10?, config: EGLConfig?) {
         // Sets the background colour
@@ -41,22 +50,22 @@ class OpenGLView(ctx: Context, aSet:AttributeSet): GLSurfaceView(ctx, aSet), GLS
 
         try {
             val success = gpu.loadShaders(context.assets, "vertex.glsl", "fragment.glsl")
-            if(success == false) {
+            if (success == false) {
                 Log.d("opengl01", gpu.lastShaderError)
             }
             fbuf = OpenGLUtils.makeFloatBuffer(
                 floatArrayOf(
-                    0f, 0f, 0f,
-                    1f, 0f, 0f,
-                    0f, 1f, 0f,
-                    0f, 0f, 0f,
-                    -1f, 0f, 0f,
-                    0f, -1f, 0f
+                    0f, 0f, -3f,
+                    1f, 0f, -3f,
+                    0.5f, 1f, -3f,
+                    -0.5f, 0f, -6f,
+                    0.5f, 0f, -6f,
+                    0f, 1f, -6f
                 )
             )
             // Selects this shader program
             gpu.select()
-        } catch(e: IOException) {
+        } catch (e: IOException) {
             Log.d("opengl01", e.stackTraceToString())
         }
     }
@@ -74,8 +83,22 @@ class OpenGLView(ctx: Context, aSet:AttributeSet): GLSurfaceView(ctx, aSet), GLS
 
         // Only run code below if buffer is not null
         fbuf?.apply {
+
+            val uView = gpu.getUniformLocation("uView");
+            val uProjection = gpu.getUniformLocation("uProjection")
+
+            viewMatrix.setAsIdentityMatrix()
+
+            // TODO: Define the translation for the view matrix needed with respect to the
+            // current camera coords
+
+            //camera.position.x camera.position.y camera.position.z
+
+            gpu.sendMatrix(uView, viewMatrix)
+            gpu.sendMatrix(uProjection, projectionMatrix)
+
             gpu.setUniform4FloatArray(ref_uColour, blue)
-            gpu.specifyBufferedDataFormat(ref_aVertex, this, 0 )
+            gpu.specifyBufferedDataFormat(ref_aVertex, this, 0)
             gpu.drawBufferedTriangles(0, 3)
             gpu.setUniform4FloatArray(ref_uColour, yellow)
             gpu.drawBufferedTriangles(3, 3)
@@ -87,6 +110,9 @@ class OpenGLView(ctx: Context, aSet:AttributeSet): GLSurfaceView(ctx, aSet), GLS
     // when the device is rotated)
     override fun onSurfaceChanged(gl: GL10?, width: Int, height: Int) {
         GLES20.glViewport(0, 0, width, height)
+        val hfov = 60.0f
+        val aspect: Float = width.toFloat() / height
+        projectionMatrix.setProjectionMatrix(hfov, aspect, 0.001f, 100f)
     }
 
 }
